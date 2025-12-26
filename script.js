@@ -180,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // API Key - For local development only
     // For production, use Netlify Functions to keep your key secure
-    const API_KEY = 'AIzaSyBwcrdc0xJ_tA10TXiS7Cp3U3wfPX7KpZY';
     
     console.log('API Key loaded:', API_KEY ? '✅' : '❌ Not loaded');
 
