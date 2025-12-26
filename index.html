@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f3e7ff">
+    <title>Neko-OS!</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Comic+Neue:wght@400;700&family=Dancing+Script:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <span class="terminal-button red"></span>
+                    <span class="terminal-button yellow"></span>
+                    <span class="terminal-button green"></span>
+                </div>
+                <div class="terminal-title">SYSTEM INITIALIZATION</div>
+            </div>
+            <div class="terminal-body">
+                <div id="terminal-text"></div>
+                <span class="cursor">_</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop id="bg-video" onerror="console.error('Video error:', event)" onloadeddata="console.log('Video loaded successfully')">
+            <source src="static\anime-girl-loading-system.3840x2160.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    
+    <div id="scanline-overlay"></div>
+    
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="header-content">
+                <h2>Neko-OS!</h2>
+            </div>
+            <button id="clear-chat-btn" title="Clear Chat" class="clear-btn">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div class="chat-box" id="chat-box">
+            <!-- Messages will be added here by JavaScript -->
+        </div>
+        
+        <!-- Input Area -->
+        <div class="chat-input-container">
+            <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-btn" title="Send Message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
