@@ -6,14 +6,34 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 405,
             body: JSON.stringify({ error: 'Method Not Allowed' }),
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         };
     }
 
     try {
+        console.log('Received request:', event.body);
+        
+        if (!event.body) {
+            throw new Error('No request body provided');
+        }
+
         const { message, conversationHistory } = JSON.parse(event.body);
+        
+        if (!message) {
+            throw new Error('No message provided in request');
+        }
+
         const API_KEY = process.env.GEMINI_API_KEY;
         
+        if (!API_KEY) {
+            console.error('GEMINI_API_KEY is not set');
+            throw new Error('Server configuration error');
+        }
+
         const response = await fetch(`https://generativeai.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
             method: 'POST',
             headers: {
@@ -45,9 +65,11 @@ SPEAKING STYLE:
 - No poetic or dramatic monologues
 
 Current conversation:
-${conversationHistory.map(m => 
-    `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.parts[0].text}`
-).join('\n')}`
+${(conversationHistory || []).map(m => 
+    m && m.parts && m.parts[0] && m.parts[0].text ? 
+    `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.parts[0].text}` : 
+    ''
+).filter(Boolean).join('\n')}`
                         }]
                     },
                     { 
@@ -64,16 +86,17 @@ ${conversationHistory.map(m =>
             })
         });
 
+        const responseData = await response.json();
+        console.log('API Response:', JSON.stringify(responseData, null, 2));
+
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'API request failed');
+            console.error('API Error:', responseData);
+            throw new Error(responseData.error?.message || 'API request failed');
         }
 
-        const data = await response.json();
-        
         return {
             statusCode: 200,
-            body: JSON.stringify(data),
+            body: JSON.stringify(responseData),
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
@@ -81,8 +104,9 @@ ${conversationHistory.map(m =>
             }
         };
     } catch (error) {
+        console.error('Error in function:', error);
         return {
-            statusCode: 500,
+            statusCode: error.statusCode || 500,
             body: JSON.stringify({ 
                 error: error.message,
                 stack: process.env.NODE_ENV === 'development' ? error.stack : undefined

@@ -350,32 +350,44 @@ EXAMPLES:
     };
 
     const handleSendMessage = async () => {
-        const message = userInput.value.trim();
-        if (message === '') return;
+    const message = userInput.value.trim();
+    if (message === '') return;
+    
+    userInput.value = '';
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+    
+    // Show loading state
+    const loadingMessage = addMessage('bot', 'Omen is thinking...', false);
+    
+    try {
+        // Add user message to conversation history
+        const userMessage = {
+            role: 'user',
+            parts: [{ text: message }]
+        };
+        conversationHistory.push(userMessage);
         
-        userInput.value = '';
-        addMessage('user', message);
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
         
         try {
-            // Add user message to conversation history
-            const userMessage = {
-                role: 'user',
-                parts: [{ text: message }]
-            };
-            conversationHistory.push(userMessage);
-            
             const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     message,
-                    conversationHistory: conversationHistory.slice(0, -1) // Exclude current message
-                })
+                    conversationHistory: conversationHistory.slice(0, -1)
+                }),
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to get response');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to get response');
             }
             
             const data = await response.json();
@@ -387,17 +399,41 @@ EXAMPLES:
                     role: 'model',
                     parts: [{ text: botResponse }]
                 });
+                
+                // Replace loading message with actual response
+                loadingMessage.remove();
                 addMessage('bot', botResponse);
                 saveConversation();
             } else {
                 throw new Error('Invalid response format from API');
             }
-        } catch (error) {
-            console.error('Error:', error);
-            addMessage('bot', `Error: ${error.message}`);
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            throw fetchError;
         }
-    };
-
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Remove loading message if it exists
+        if (loadingMessage && loadingMessage.remove) {
+            loadingMessage.remove();
+        }
+        
+        let errorMessage = 'An error occurred. Please try again.';
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timed out. The response is taking too long.';
+        } else if (error.message) {
+            errorMessage = `Error: ${error.message}`;
+        }
+        
+        addMessage('bot', errorMessage);
+    } finally {
+        // Re-enable input and button
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
+};
     // Event listeners
     sendBtn.addEventListener('click', handleSendMessage);
     userInput.addEventListener('keydown', (event) => {
