@@ -9,7 +9,8 @@
 
 [dev]
   framework = "#custom"
-  command = "npm run dev"
-  targetPort = 3000
+  command = "python -m http.server 8888"
+  targetPort = 8888
+  port = 8889
   publish = "."
-  port = 3000
+  autoLaunch = true

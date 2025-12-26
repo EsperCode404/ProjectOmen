@@ -2,9 +2,9 @@
   "name": "omen-ai",
   "version": "1.0.0",
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "@netlify/functions": "^1.0.0"
+    "@netlify/functions": "^1.6.0"
   }
 }

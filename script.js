@@ -350,63 +350,37 @@ EXAMPLES:
     };
 
     const handleSendMessage = async () => {
-    const message = userInput.value.trim();
-    if (message === '') return;
-    
-    userInput.value = '';
-    addMessage('user', message);
-    
-    try {
-        // Add user message to conversation history
-        const userMessage = {
-            role: 'user',
-            parts: [{ text: message }]
-        };
-        conversationHistory.push(userMessage);
+        const message = userInput.value.trim();
+        if (message === '') return;
         
-        const response = await fetch('/.netlify/functions/gemini', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                message,
-                conversationHistory: conversationHistory.slice(0, -1) // Exclude current message
-            })
-        });
+        userInput.value = '';
+        addMessage('user', message);
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to get response');
-        }
-        
-        const data = await response.json();
-        
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            const botResponse = data.candidates[0].content.parts[0].text;
-            // Add bot response to conversation history
-            conversationHistory.push({
-                role: 'model',
-                parts: [{ text: botResponse }]
+        try {
+            // Add user message to conversation history
+            const userMessage = {
+                role: 'user',
+                parts: [{ text: message }]
+            };
+            conversationHistory.push(userMessage);
+            
+            const response = await fetch('/.netlify/functions/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message,
+                    conversationHistory: conversationHistory.slice(0, -1) // Exclude current message
+                })
             });
-            addMessage('bot', botResponse);
-            saveConversation();
-        } else {
-            throw new Error('Invalid response format from API');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        addMessage('bot', `Error: ${error.message}`);
-    }
-};
             
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('API Error:', errorData);
-                throw new Error(errorData.error?.message || 'API request failed');
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to get response');
             }
             
             const data = await response.json();
             
-            if (data.candidates && data.candidates[0].content.parts[0].text) {
+            if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                 const botResponse = data.candidates[0].content.parts[0].text;
                 // Add bot response to conversation history
                 conversationHistory.push({
@@ -416,12 +390,11 @@ EXAMPLES:
                 addMessage('bot', botResponse);
                 saveConversation();
             } else {
-                console.error('Unexpected API response:', data);
                 throw new Error('Invalid response format from API');
             }
         } catch (error) {
             console.error('Error:', error);
-            addMessage('bot', 'Oops! Something went wrong. Please try again later. 😢');
+            addMessage('bot', `Error: ${error.message}`);
         }
     };
 
