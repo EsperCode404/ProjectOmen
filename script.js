@@ -350,45 +350,53 @@ EXAMPLES:
     };
 
     const handleSendMessage = async () => {
-        const message = userInput.value.trim();
-        if (message === '') return;
+    const message = userInput.value.trim();
+    if (message === '') return;
+    
+    userInput.value = '';
+    addMessage('user', message);
+    
+    try {
+        // Add user message to conversation history
+        const userMessage = {
+            role: 'user',
+            parts: [{ text: message }]
+        };
+        conversationHistory.push(userMessage);
         
-        userInput.value = '';
-        addMessage('user', message);
+        const response = await fetch('/.netlify/functions/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message,
+                conversationHistory: conversationHistory.slice(0, -1) // Exclude current message
+            })
+        });
         
-        try {
-            // Add user message to conversation history
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to get response');
+        }
+        
+        const data = await response.json();
+        
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            const botResponse = data.candidates[0].content.parts[0].text;
+            // Add bot response to conversation history
             conversationHistory.push({
-                role: 'user',
-                parts: [{ text: message }]
+                role: 'model',
+                parts: [{ text: botResponse }]
             });
-            
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [{ text: SYSTEM_INSTRUCTION + '\n\nCurrent conversation:\n' + 
-                                conversationHistory.map(m => 
-                                    `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.parts[0].text}`
-                                ).join('\n')}
-                            ]
-                        },
-                        { 
-                            role: 'user',
-                            parts: [{ text: message }]
-                        }
-                    ],
-                    generationConfig: {
-                        temperature: 0.9,
-                        topK: 1,
-                        topP: 1,
-                        maxOutputTokens: 2048,
-                    }
-                })
-            });
+            addMessage('bot', botResponse);
+            saveConversation();
+        } else {
+            throw new Error('Invalid response format from API');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('bot', `Error: ${error.message}`);
+    }
+};
             
             if (!response.ok) {
                 const errorData = await response.json();
